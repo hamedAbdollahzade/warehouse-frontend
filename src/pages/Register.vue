@@ -6,28 +6,39 @@
         <p class="text-slate-500 mt-2">برای شروع، حساب کاربری خود را بسازید</p>
       </div>
 
-      <form class="mt-8 space-y-4">
+      <form @submit.prevent="submit" class="mt-8 space-y-4">
         <div>
           <label class="block mb-2 text-sm font-medium">نام کامل</label>
-          <input type="text" class="input" placeholder="نام و نام خانوادگی"/>
+          <input v-model="form.name" type="text" class="input" placeholder="نام و نام خانوادگی"/>
         </div>
 
         <div>
           <label class="block mb-2 text-sm font-medium">ایمیل</label>
-          <input type="email" class="input" placeholder="example@email.com"/>
+          <input v-model="form.email" type="email" class="input" placeholder="example@email.com"/>
         </div>
 
         <div>
           <label class="block mb-2 text-sm font-medium">رمز عبور</label>
-          <input type="password" class="input" placeholder="********"/>
+          <input v-model="form.password" type="password" class="input" placeholder="********"/>
         </div>
 
         <div>
           <label class="block mb-2 text-sm font-medium">تکرار رمز عبور</label>
-          <input type="password" class="input" placeholder="********"/>
+          <input v-model="form.password_confirmation" type="password" class="input" placeholder="********"/>
         </div>
 
-        <button type="submit" class="btn-primary w-full">ایجاد حساب</button>
+        <p v-if="auth.error" class="text-sm text-red-600">
+          {{ auth.error }}
+        </p>
+
+
+        <button
+            type="submit"
+            class="btn-primary w-full"
+            :disabled="auth.loading"
+        >
+          {{ auth.loading ? 'در حال ثبت‌نام...' : 'ثبت‌نام' }}
+        </button>
       </form>
 
       <p class="text-sm text-slate-500 mt-6 text-center">
@@ -39,3 +50,28 @@
     </div>
   </section>
 </template>
+
+<script setup>
+import {reactive} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthStore} from '../stores/auth'
+
+const router = useRouter()
+const auth = useAuthStore()
+
+const form = reactive({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+})
+
+const submit = async () => {
+  try {
+    await auth.register(form)
+    router.push({name: 'products'})
+  } catch (e) {
+    // auth.error در store ست می‌شود
+  }
+}
+</script>

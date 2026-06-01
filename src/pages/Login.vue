@@ -6,18 +6,22 @@
         <p class="text-slate-500 mt-2">برای دسترسی به پنل خود وارد شوید</p>
       </div>
 
-      <form class="mt-8 space-y-4">
+      <form @submit.prevent="submit" class="mt-8 space-y-4">
         <div>
           <label class="block mb-2 text-sm font-medium">ایمیل</label>
-          <input type="email" class="input" placeholder="example@email.com" />
+          <input v-model="form.email" type="email" class="input" placeholder="example@email.com"/>
         </div>
 
         <div>
           <label class="block mb-2 text-sm font-medium">رمز عبور</label>
-          <input type="password" class="input" placeholder="********" />
+          <input v-model="form.password" type="password" class="input" placeholder="********"/>
         </div>
 
-        <button type="submit" class="btn-primary w-full">ورود</button>
+        <p v-if="auth.error" class="text-sm text-red-600">
+          {{ auth.error }}
+        </p>
+
+        <button :disabled="auth.loading" type="submit" class="btn-primary w-full">ورود</button>
       </form>
 
       <p class="text-sm text-slate-500 mt-6 text-center">
@@ -29,3 +33,26 @@
     </div>
   </section>
 </template>
+
+
+<script setup>
+import {reactive} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAuthStore} from '../stores/auth'
+
+const router = useRouter()
+const auth = useAuthStore()
+
+const form = reactive({
+  email: '',
+  password: '',
+})
+
+const submit = async () => {
+  try {
+    await auth.login(form)
+    router.push({name: 'products'})
+  } catch (e) {
+  }
+}
+</script>

@@ -92,6 +92,13 @@ button {
     background: #f1f5f9;
 }
 
+.btn-primary:disabled,
+.btn-accent:disabled,
+.btn-outline:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .input {
     width: 100%;
     border: 1px solid var(--brand-border);
