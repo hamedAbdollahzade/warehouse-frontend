@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col bg-(--brand-bg) text-(--brand-text)">
     <AppHeader/>
-    <main class="flex-1">
+    <main class="flex-1 transition-colors">
       <slot/>
     </main>
     <AppFooter/>

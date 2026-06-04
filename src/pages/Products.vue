@@ -304,7 +304,7 @@ onMounted(() => {
         <div class="md:col-span-2 flex flex-col gap-3 pt-2">
           <p
               v-if="createError"
-              class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[var(--brand-danger)]"
+              class="status-danger rounded-xl border border-[color-mix(in_srgb,var(--brand-danger)_24%,transparent)] px-4 py-3 text-sm"
           >
             {{ createError }}
           </p>
@@ -375,7 +375,7 @@ onMounted(() => {
     <!-- Error -->
     <div
         v-else-if="error"
-        class="card border border-red-200 bg-red-50 p-6"
+        class="card status-danger border border-[color-mix(in_srgb,var(--brand-danger)_24%,transparent)] p-6"
     >
       <p class="text-sm font-medium text-[var(--brand-danger)]">
         {{ error }}
@@ -421,7 +421,7 @@ onMounted(() => {
 
       <div class="overflow-x-auto">
         <table class="min-w-full">
-          <thead class="bg-slate-50">
+          <thead class="bg-[var(--brand-surface-soft)]">
           <tr class="text-right text-sm text-[var(--brand-muted)]">
             <th class="px-6 py-4 font-bold">شناسه</th>
             <th class="px-6 py-4 font-bold">SKU</th>
@@ -437,7 +437,7 @@ onMounted(() => {
           <tr
               v-for="product in filteredProducts"
               :key="product.id"
-              class="border-t border-[var(--brand-border)] text-sm transition hover:bg-slate-50/80"
+              class="border-t border-[var(--brand-border)] text-sm transition hover:bg-[var(--brand-surface-soft)]"
           >
             <td class="px-6 py-4 font-medium text-[var(--brand-primary)]">
               {{ product.id }}
@@ -464,8 +464,8 @@ onMounted(() => {
                     class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
                     :class="
                     Number(product.stock) <= Number(product.min_stock)
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-emerald-100 text-emerald-700'
+                      ? 'status-warning'
+                      : 'status-success'
                   "
                 >
                   {{
@@ -486,7 +486,7 @@ onMounted(() => {
                 </button>
 
                 <button
-                    class="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-[var(--brand-danger)] transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="status-danger rounded-xl border border-[color-mix(in_srgb,var(--brand-danger)_24%,transparent)] px-4 py-2 text-sm font-semibold transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
                     :disabled="deletingId === product.id"
                     @click="handleDelete(product.id)"
                 >
@@ -591,7 +591,7 @@ onMounted(() => {
           <div class="md:col-span-2">
             <p
                 v-if="editError"
-                class="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[var(--brand-danger)]"
+                class="status-danger mb-3 rounded-xl border border-[color-mix(in_srgb,var(--brand-danger)_24%,transparent)] px-4 py-3 text-sm"
             >
               {{ editError }}
             </p>

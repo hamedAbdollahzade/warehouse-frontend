@@ -1,117 +1,115 @@
 <script setup>
-import {computed} from 'vue'
+import {computed, onMounted, ref, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '../stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
 const isLoggedIn = computed(() => auth.isAuthenticated)
+const isDark = ref(false)
+
+const navLinks = [
+  {to: '/', label: 'خانه'},
+  {to: '/about', label: 'درباره ما'},
+  {to: '/contact', label: 'تماس با ما'},
+  {to: '/products', label: 'کالاها'},
+]
 
 const handleLogout = async () => {
   await auth.logout()
   router.push({name: 'login'})
 }
+
+const applyTheme = (dark) => {
+  document.documentElement.classList.toggle('dark', dark)
+  localStorage.setItem('theme', dark ? 'dark' : 'light')
+}
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value
+}
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme')
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches
+  isDark.value = savedTheme ? savedTheme === 'dark' : prefersDark
+  applyTheme(isDark.value)
+})
+
+watch(isDark, applyTheme)
 </script>
 
 <template>
-  <!-- هدر چسبنده با پس‌زمینه نیمه‌شفاف و افکت بلور -->
-  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[var(--brand-border)]">
-    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-
-      <!-- بخش لوگو و برند (سمت راست) -->
+  <header class="sticky top-0 z-50 border-b border-[var(--brand-border)] bg-[color-mix(in_srgb,var(--brand-bg)_82%,transparent)] backdrop-blur-xl">
+    <div class="container-app px-4 py-4 flex items-center justify-between gap-4">
       <router-link to="/" class="flex items-center gap-3 group">
         <div
-            class="w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center overflow-hidden shadow-sm group-hover:shadow-md transition-shadow"
-            style="background-color: var(--brand-accent);"
+            class="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-violet-500/10 ring-1 ring-[var(--brand-border)] transition-transform group-hover:-translate-y-0.5"
+            style="background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-2));"
         >
-          <!-- اگر عکس لود نشد، یک متن جایگزین نمایش داده شود -->
           <img
-              class="w-full h-full object-cover rounded-full"
+              class="w-full h-full object-cover"
               src="/src/assets/Stockio.png"
               alt="StockioLogo"
               @error="e => e.target.style.display='none'"
           >
-
         </div>
         <div class="hidden sm:block">
-          <div class="font-extrabold text-lg leading-tight" style="color: var(--brand-primary);">
+          <div class="font-black text-lg leading-tight text-(--brand-primary)">
             Stockio
           </div>
-          <div class="text-xs font-medium tracking-wide" style="color: var(--brand-muted);">
+          <div class="text-xs font-medium tracking-wide text-muted">
             Warehouse Management
           </div>
         </div>
       </router-link>
 
-      <!-- منوی ناوبری (وسط صفحه) -->
-      <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+      <nav class="hidden md:flex items-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)]/80 p-1 text-sm font-bold shadow-sm">
         <router-link
-            to="/"
-            class="hover:text-(--brand-accent) transition-colors duration-200"
-            active-class="text-[var(--brand-accent)]"
+            v-for="link in navLinks"
+            :key="link.to"
+            :to="link.to"
+            class="rounded-xl px-4 py-2 text-muted transition hover:bg-[var(--brand-surface-soft)] hover:text-[var(--brand-accent)]"
+            active-class="!bg-[var(--brand-surface-soft)] !text-[var(--brand-accent)]"
         >
-          خانه
-        </router-link>
-        <router-link
-            to="/about"
-            class="hover:text-(--brand-accent) transition-colors duration-200"
-        >
-          درباره ما
-        </router-link>
-        <router-link
-            to="/contact"
-            class="hover:text-(--brand-accent) transition-colors duration-200"
-        >
-          تماس با ما
-        </router-link>
-        <router-link
-            to="/products"
-            class="hover:text-(--brand-accent) transition-colors duration-200"
-        >
-          کالاها
+          {{ link.label }}
         </router-link>
       </nav>
 
-      <!-- بخش احراز هویت (سمت چپ) -->
       <div class="flex items-center gap-3">
+        <button
+            type="button"
+            class="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] text-lg transition hover:border-[var(--brand-accent)] hover:text-[var(--brand-accent)]"
+            :aria-label="isDark ? 'فعال کردن حالت روشن' : 'فعال کردن حالت تاریک'"
+            @click="toggleTheme"
+        >
+          {{ isDark ? '☀️' : '🌙' }}
+        </button>
+
         <template v-if="isLoggedIn">
-          <!-- نمایش نام کاربر در دسکتاپ -->
-          <span class="hidden md:inline-block text-sm font-medium px-3 py-1 rounded-full"
-                style="background-color: var(--brand-bg); color: var(--brand-primary);">
+          <span class="hidden md:inline-block rounded-full bg-[var(--brand-surface-soft)] px-3 py-1 text-sm font-bold text-(--brand-primary)">
             {{ auth.user?.name || 'کاربر' }}
           </span>
 
-          <!-- دکمه خروج -->
           <button
               @click="handleLogout"
-              class="text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-200"
-              style="color: var(--brand-danger); border: 1px solid var(--brand-border);"
-              onmouseover="this.style.backgroundColor='var(--brand-danger)'; this.style.color='white';"
-              onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--brand-danger)';"
+              class="rounded-xl border border-[var(--brand-border)] px-4 py-2 text-sm font-bold text-[var(--brand-danger)] transition hover:bg-[color-mix(in_srgb,var(--brand-danger)_12%,transparent)]"
           >
             خروج
           </button>
         </template>
 
         <template v-else>
-          <!-- دکمه ورود (Outline) -->
           <router-link
               to="/login"
-              class="hidden sm:inline-flex items-center justify-center px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-              style="color: var(--brand-primary); border: 1px solid var(--brand-border);"
-              onmouseover="this.style.borderColor='var(--brand-primary)'; this.style.color='var(--brand-primary)';"
-              onmouseout="this.style.borderColor='var(--brand-border)';"
+              class="btn-outline hidden px-5 py-2 text-sm font-bold sm:inline-flex"
           >
             ورود
           </router-link>
 
-          <!-- دکمه ثبت‌نام (Primary) -->
           <router-link
               to="/register"
-              class="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
-              style="background-color: var(--brand-accent);"
-              onmouseover="this.style.opacity='0.9';"
-              onmouseout="this.style.opacity='1';"
+              class="btn-primary inline-flex px-5 py-2 text-sm font-bold"
           >
             ثبت‌نام
           </router-link>

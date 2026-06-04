@@ -11,15 +11,15 @@
         <div class="card p-6 mt-8 space-y-4">
           <div>
             <div class="font-semibold text-(--brand-primary)">ایمیل</div>
-            <div class="text-slate-600 mt-1">support@stockio.app</div>
+            <div class="text-muted mt-1">support@stockio.app</div>
           </div>
           <div>
             <div class="font-semibold text-(--brand-primary)">شماره تماس</div>
-            <div class="text-slate-600 mt-1">021-00000000</div>
+            <div class="text-muted mt-1">021-00000000</div>
           </div>
           <div>
             <div class="font-semibold text-(--brand-primary)">آدرس</div>
-            <div class="text-slate-600 mt-1">تهران، ایران</div>
+            <div class="text-muted mt-1">تهران، ایران</div>
           </div>
         </div>
       </div>
