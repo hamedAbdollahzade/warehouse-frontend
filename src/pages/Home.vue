@@ -1,5 +1,7 @@
 <template>
-  <section class="relative overflow-hidden">
+  <!-- اگر لاگین باشد -->
+  <Dashboard v-if="isLoggedIn" />
+  <section v-else class="relative overflow-hidden">
     <div class="absolute inset-x-0 top-0 -z-10 h-[620px]" style="background: var(--hero-gradient)"></div>
     <div class="absolute right-0 top-32 -z-10 h-72 w-72 rounded-full bg-[color-mix(in_srgb,var(--brand-accent)_22%,transparent)] blur-3xl"></div>
     <div class="absolute left-10 top-20 -z-10 h-56 w-56 rounded-full bg-[color-mix(in_srgb,var(--brand-accent-2)_20%,transparent)] blur-3xl"></div>
@@ -153,7 +155,17 @@
 </template>
 
 <script setup>
-import FeatureCard from "../components/FeatureCard.vue";
+import {computed} from "vue"
+import {storeToRefs} from "pinia"
+import {useAuthStore} from "../stores/auth"
+
+import Dashboard from "./Dashboard.vue"
+import FeatureCard from "../components/FeatureCard.vue"
+
+const authStore = useAuthStore()
+const {user} = storeToRefs(authStore)
+
+const isLoggedIn = computed(() => !!user.value)
 
 const stats = [
   { value: "۱,۲۴۰", label: "کالای ثبت‌شده" },

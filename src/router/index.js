@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
+import {createRouter, createWebHistory} from 'vue-router'
+import {useAuthStore} from '../stores/auth'
 
 import Home from '../pages/Home.vue'
 import About from '../pages/About.vue'
@@ -7,6 +7,8 @@ import Contact from '../pages/Contact.vue'
 import Login from '../pages/Login.vue'
 import Register from '../pages/Register.vue'
 import Products from '../pages/Products.vue'
+import Dashboard from '../pages/Dashboard.vue'
+import Kardex from "../pages/Kardex.vue";
 
 const routes = [
     {
@@ -28,20 +30,33 @@ const routes = [
         path: '/login',
         name: 'login',
         component: Login,
-        meta: { guest: true },
+        meta: {guest: true},
     },
     {
         path: '/register',
         name: 'register',
         component: Register,
-        meta: { guest: true },
+        meta: {guest: true},
     },
     {
         path: '/products',
         name: 'products',
         component: Products,
-        meta: { requiresAuth: true },
+        meta: {requiresAuth: true},
     },
+    {
+        path: "/products/:id/kardex",
+        name: "product-kardex",
+        component: Kardex,
+        meta: {requiresAuth: true},
+    },
+    {
+        path: '/dashboard',
+        name: 'Dashboard',
+        component: Dashboard,
+        meta: {requiresAuth: true},
+    },
+
 ]
 
 const router = createRouter({
@@ -61,11 +76,11 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
-        return { name: 'login' }
+        return {name: 'login'}
     }
 
     if (to.meta.guest && auth.isAuthenticated) {
-        return { name: 'products' }
+        return {name: 'products'}
     }
 })
 

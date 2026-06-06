@@ -1,7 +1,7 @@
 import api from './api'
 
 export const getProductsRequest = (params = {}) => {
-    return api.get('/products', { params })
+    return api.get('/products', {params})
 }
 
 export const getProductRequest = (id) => {
