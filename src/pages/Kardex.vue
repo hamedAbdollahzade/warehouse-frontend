@@ -53,7 +53,7 @@ onMounted(() => {
       >
 
         <td class="p-3">
-          {{ new Date(row.date).toLocaleString() }}
+          {{ new Date(row.date).toLocaleString("fa-ir") }}
         </td>
 
         <td class="p-3">

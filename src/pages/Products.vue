@@ -8,6 +8,14 @@ import {
 } from '../services/products'
 import {createStockMovementRequest} from '../services/stockMovements'
 import {useRouter} from "vue-router";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Scale,
+  Pencil,
+  Trash2,
+  BarChart3
+} from "lucide-vue-next"
 
 const router = useRouter()
 
@@ -336,21 +344,67 @@ onMounted(fetchProducts)
           </span>
           </td>
 
-          <td>{{ p.updated_at }}</td>
+          <td>{{ new Date(p.updated_at).toLocaleString("fa-ir") }}</td>
 
-          <td class="flex gap-2 flex-wrap py-2">
-            <button class="btn-outline text-xs" @click="openMovement(p,'IN')">➕</button>
-            <button class="btn-outline text-xs" @click="openMovement(p,'OUT')">➖</button>
-            <button class="btn-outline text-xs" @click="openMovement(p,'ADJUST')">⚖️</button>
-            <button class="btn-outline text-xs" @click="openEdit(p)">✏️</button>
-            <button class="btn-outline text-xs text-red-600" @click="deleteProduct(p.id)">🗑</button>
-            <button
-                class="btn-outline"
-                @click="$router.push({ name: 'product-kardex', params: { id: p.id } })"
-            >
-              کاردکس
-            </button>
+          <td class="flex justify-center gap-2 flex-wrap py-2">
+
+            <!-- IN -->
+            <div class="relative group">
+              <button class="btn-outline p-2 text-green-600"
+                      @click="openMovement(p,'IN')">
+                <ArrowDownCircle class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">ورود کالا</span>
+            </div>
+
+            <!-- OUT -->
+            <div class="relative group">
+              <button class="btn-outline p-2 text-orange-600"
+                      @click="openMovement(p,'OUT')">
+                <ArrowUpCircle class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">خروج کالا</span>
+            </div>
+
+            <!-- ADJUST -->
+            <div class="relative group">
+              <button class="btn-outline p-2 text-blue-600"
+                      @click="openMovement(p,'ADJUST')">
+                <Scale class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">اصلاح موجودی</span>
+            </div>
+
+            <!-- EDIT -->
+            <div class="relative group">
+              <button class="btn-outline p-2"
+                      @click="openEdit(p)">
+                <Pencil class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">ویرایش</span>
+            </div>
+
+            <!-- DELETE -->
+            <div class="relative group">
+              <button class="btn-outline p-2 text-red-600"
+                      @click="deleteProduct(p.id)">
+                <Trash2 class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">حذف محصول</span>
+            </div>
+
+            <!-- KARDEX -->
+            <div class="relative group">
+              <button class="btn-outline p-2"
+                      @click="$router.push({ name: 'product-kardex', params: { id: p.id } })">
+                <BarChart3 class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">کاردکس</span>
+            </div>
+
           </td>
+
+
         </tr>
         </tbody>
       </table>
