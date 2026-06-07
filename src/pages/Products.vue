@@ -14,39 +14,34 @@ import {
   Scale,
   Pencil,
   Trash2,
-  BarChart3
+  BarChart3,
+  PackagePlus // اضافه شد
 } from "lucide-vue-next"
 
 const router = useRouter()
 
 const movementBadgeClass = () => {
-  if (movementType.value === 'IN')
-    return 'bg-green-100 text-green-700'
-
-  if (movementType.value === 'OUT')
-    return 'bg-red-100 text-red-700'
-
+  if (movementType.value === 'OPENING') return 'bg-purple-100 text-purple-700' // استایل بنفش برای شروع قدرتمند
+  if (movementType.value === 'IN') return 'bg-green-100 text-green-700'
+  if (movementType.value === 'OUT') return 'bg-red-100 text-red-700'
   return 'bg-yellow-100 text-yellow-700'
 }
 
 const movementBadgeText = () => {
+  if (movementType.value === 'OPENING') return 'موجودی اولیه'
   if (movementType.value === 'IN') return 'ورود کالا'
   if (movementType.value === 'OUT') return 'خروج کالا'
   return 'اصلاح موجودی'
 }
 
-
 /* ===========================
    STATE
 =========================== */
-
 const products = ref([])
 const loading = ref(false)
 const error = ref('')
-
 const selectedIds = ref([])
 const deletingBulk = ref(false)
-
 const searchTerm = ref('')
 const debouncedSearch = ref('')
 const stockFilter = ref('all')
@@ -61,7 +56,6 @@ const pagination = ref({
 /* ===========================
    MODALS
 =========================== */
-
 const createModal = ref(false)
 const editModal = ref(false)
 const movementModal = ref(false)
@@ -72,7 +66,6 @@ const movementType = ref('')
 /* ===========================
    FORMS
 =========================== */
-
 const createForm = reactive({
   name: '',
   sku: '',
@@ -94,7 +87,6 @@ const movementForm = reactive({
 /* ===========================
    DEBOUNCE SEARCH
 =========================== */
-
 let timeout
 watch(searchTerm, (val) => {
   clearTimeout(timeout)
@@ -108,7 +100,6 @@ watch(debouncedSearch, () => fetchProducts(1))
 /* ===========================
    FETCH
 =========================== */
-
 const fetchProducts = async (page = 1) => {
   loading.value = true
   try {
@@ -116,7 +107,6 @@ const fetchProducts = async (page = 1) => {
       page,
       search: debouncedSearch.value,
     })
-
     products.value = data.data
     pagination.value = data
   } finally {
@@ -127,15 +117,12 @@ const fetchProducts = async (page = 1) => {
 /* ===========================
    FILTER
 =========================== */
-
 const filteredProducts = computed(() => {
   return products.value.filter(p => {
     const stock = Number(p.current_stock)
-
     if (stockFilter.value === 'out') return stock === 0
     if (stockFilter.value === 'low') return stock > 0 && stock <= p.min_stock
     if (stockFilter.value === 'ok') return stock > p.min_stock
-
     return true
   })
 })
@@ -143,7 +130,6 @@ const filteredProducts = computed(() => {
 /* ===========================
    CRUD
 =========================== */
-
 const createProduct = async () => {
   await createProductRequest(createForm)
   createModal.value = false
@@ -169,66 +155,50 @@ const deleteProduct = async (id) => {
 }
 
 /* ===========================
-   BULK DELETE
-=========================== */
-
-const bulkDelete = async () => {
-  if (!selectedIds.value.length) return
-  if (!confirm('حذف گروهی انجام شود؟')) return
-
-  deletingBulk.value = true
-
-  for (const id of selectedIds.value) {
-    await deleteProductRequest(id)
-  }
-
-  selectedIds.value = []
-  deletingBulk.value = false
-  await fetchProducts()
-}
-
-/* ===========================
    STOCK MOVEMENT
 =========================== */
-
 const openMovement = (product, type) => {
   selectedProduct.value = product
   movementType.value = type
+
+  // اگر موجودی اولیه بود، متن پیش‌فرض بذاریم
+  if (type === 'OPENING') {
+    movementForm.quantity = 1
+    movementForm.note = 'موجودی اولیه انبار'
+  } else {
+    movementForm.quantity = 1
+    movementForm.note = ''
+  }
+
   movementModal.value = true
 }
 
 const submitMovement = async () => {
-  await createStockMovementRequest({
-    product_id: selectedProduct.value.id,
-    type: movementType.value,
-    quantity: movementForm.quantity,
-    note: movementForm.note
-  })
+  try {
+    await createStockMovementRequest({
+      product_id: selectedProduct.value.id,
+      type: movementType.value,
+      quantity: movementForm.quantity,
+      note: movementForm.note
+    })
 
-  movementModal.value = false
-  movementForm.quantity = 1
-  movementForm.note = ''
+    movementModal.value = false
+    movementForm.quantity = 1
+    movementForm.note = ''
 
-  await fetchProducts()
+    await fetchProducts() // برای آپدیت شدن دکمه Opening و موجودی
+  } catch (e) {
+    alert(e.response?.data?.message || 'خطایی رخ داد')
+  }
 }
 
 /* ===========================
    CSV EXPORT
 =========================== */
-
 const exportCSV = () => {
   const headers = ['ID', 'SKU', 'Name', 'Stock']
-  const rows = filteredProducts.value.map(p => [
-    p.id,
-    p.sku,
-    p.name,
-    p.current_stock
-  ])
-
-  const csv = [headers, ...rows]
-      .map(e => e.join(','))
-      .join('\n')
-
+  const rows = filteredProducts.value.map(p => [p.id, p.sku, p.name, p.current_stock])
+  const csv = [headers, ...rows].map(e => e.join(',')).join('\n')
   const blob = new Blob([csv], {type: 'text/csv'})
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -240,7 +210,6 @@ const exportCSV = () => {
 /* ===========================
    STOCK STATUS
 =========================== */
-
 const stockStatusClass = (p) => {
   const stock = Number(p.current_stock)
   if (stock === 0) return 'status-danger'
@@ -259,11 +228,10 @@ onMounted(fetchProducts)
 </script>
 
 <template>
-  <section class="container-app px-4 py-6 space-y-6">
+  <section class="container-app px-4 py-6 space-y-6 text-right" dir="rtl">
 
     <div class="flex justify-between items-center">
       <h1 class="section-title">مدیریت محصولات</h1>
-
       <button class="btn-primary" @click="createModal=true">
         ➕ افزودن محصول
       </button>
@@ -271,46 +239,22 @@ onMounted(fetchProducts)
 
     <!-- Filters -->
     <div class="card p-4 flex gap-4 flex-wrap">
-
-      <input
-          v-model="searchTerm"
-          class="input max-w-sm"
-          placeholder="جستجو..."
-      />
-
+      <input v-model="searchTerm" class="input max-w-sm" placeholder="جستجو..."/>
       <select v-model="stockFilter" class="input max-w-xs">
         <option value="all">همه</option>
         <option value="out">ناموجود</option>
         <option value="low">کم موجود</option>
         <option value="ok">موجود</option>
       </select>
-
-      <button class="btn-outline" @click="exportCSV">
-        خروجی CSV
-      </button>
-
-      <button
-          class="status-danger px-4 py-2 rounded-xl text-sm font-semibold"
-          :disabled="!selectedIds.length"
-          @click="bulkDelete"
-      >
-        حذف گروهی
-      </button>
-
+      <button class="btn-outline" @click="exportCSV">خروجی CSV</button>
     </div>
 
     <!-- Table -->
     <div class="card overflow-hidden">
       <table class="min-w-full text-sm">
-        <thead class="bg-[var(--brand-surface-soft)]">
+        <thead class="bg-[var(--brand-surface-soft)] text-center">
         <tr>
-          <th class="px-3 py-2">
-            <input
-                type="checkbox"
-                @change="selectedIds = $event.target.checked ? filteredProducts.map(p=>p.id) : []"
-            />
-          </th>
-          <th>ID</th>
+          <th class="px-3 py-2">ID</th>
           <th>SKU</th>
           <th>نام</th>
           <th>موجودی</th>
@@ -320,38 +264,33 @@ onMounted(fetchProducts)
         </tr>
         </thead>
 
-        <tbody>
-        <tr
-            v-for="p in filteredProducts"
-            :key="p.id"
-            class="border-t hover:bg-[var(--brand-surface-soft)] transition"
-        >
-          <td class="px-3 py-2">
-            <input type="checkbox" :value="p.id" v-model="selectedIds"/>
-          </td>
-
+        <tbody class="text-center">
+        <tr v-for="p in filteredProducts" :key="p.id" class="border-t hover:bg-[var(--brand-surface-soft)] transition">
           <td>{{ p.id }}</td>
           <td class="font-mono">{{ p.sku }}</td>
           <td class="font-bold">{{ p.name }}</td>
           <td class="font-extrabold">{{ p.current_stock }}</td>
-
           <td>
-          <span
-              class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
-              :class="stockStatusClass(p)"
-          >
-            {{ stockStatusText(p) }}
-          </span>
+            <span class="inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="stockStatusClass(p)">
+              {{ stockStatusText(p) }}
+            </span>
           </td>
-
           <td>{{ new Date(p.updated_at).toLocaleString("fa-ir") }}</td>
 
           <td class="flex justify-center gap-2 flex-wrap py-2">
 
+            <!-- OPENING (فقط اگر قبلا ثبت نشده باشد نمایش داده می‌شود) -->
+            <div v-if="!p.has_opening" class="relative group">
+              <button class="btn-outline p-2 text-purple-600 border-purple-200 hover:bg-purple-50"
+                      @click="openMovement(p, 'OPENING')">
+                <PackagePlus class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">ثبت موجودی اولیه</span>
+            </div>
+
             <!-- IN -->
             <div class="relative group">
-              <button class="btn-outline p-2 text-green-600"
-                      @click="openMovement(p,'IN')">
+              <button class="btn-outline p-2 text-green-600" @click="openMovement(p,'IN')">
                 <ArrowDownCircle class="w-4 h-4"/>
               </button>
               <span class="tooltip">ورود کالا</span>
@@ -359,8 +298,7 @@ onMounted(fetchProducts)
 
             <!-- OUT -->
             <div class="relative group">
-              <button class="btn-outline p-2 text-orange-600"
-                      @click="openMovement(p,'OUT')">
+              <button class="btn-outline p-2 text-orange-600" @click="openMovement(p,'OUT')">
                 <ArrowUpCircle class="w-4 h-4"/>
               </button>
               <span class="tooltip">خروج کالا</span>
@@ -368,17 +306,24 @@ onMounted(fetchProducts)
 
             <!-- ADJUST -->
             <div class="relative group">
-              <button class="btn-outline p-2 text-blue-600"
-                      @click="openMovement(p,'ADJUST')">
+              <button class="btn-outline p-2 text-blue-600" @click="openMovement(p,'ADJUST')">
                 <Scale class="w-4 h-4"/>
               </button>
               <span class="tooltip">اصلاح موجودی</span>
             </div>
 
+            <!-- KARDEX -->
+            <div class="relative group">
+              <button class="btn-outline p-2 text-indigo-600"
+                      @click="$router.push({ name: 'product-kardex', params: { id: p.id } })">
+                <BarChart3 class="w-4 h-4"/>
+              </button>
+              <span class="tooltip">کاردکس</span>
+            </div>
+
             <!-- EDIT -->
             <div class="relative group">
-              <button class="btn-outline p-2"
-                      @click="openEdit(p)">
+              <button class="btn-outline p-2" @click="openEdit(p)">
                 <Pencil class="w-4 h-4"/>
               </button>
               <span class="tooltip">ویرایش</span>
@@ -386,103 +331,93 @@ onMounted(fetchProducts)
 
             <!-- DELETE -->
             <div class="relative group">
-              <button class="btn-outline p-2 text-red-600"
-                      @click="deleteProduct(p.id)">
+              <button class="btn-outline p-2 text-red-600" @click="deleteProduct(p.id)">
                 <Trash2 class="w-4 h-4"/>
               </button>
               <span class="tooltip">حذف محصول</span>
             </div>
 
-            <!-- KARDEX -->
-            <div class="relative group">
-              <button class="btn-outline p-2"
-                      @click="$router.push({ name: 'product-kardex', params: { id: p.id } })">
-                <BarChart3 class="w-4 h-4"/>
-              </button>
-              <span class="tooltip">کاردکس</span>
-            </div>
-
           </td>
-
-
         </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- CREATE MODAL -->
-    <div v-if="createModal" class="modal">
-      <div class="card p-6 space-y-5">
-        <h2 class="font-bold text-lg">افزودن محصول</h2>
-
-        <div class="space-y-1">
-          <label class="text-sm font-medium">نام محصول</label>
-          <input
-              v-model="createForm.name"
-              class="input w-full"
-              placeholder="مثال: لپتاپ Dell XPS"
-          />
+    <!-- MOVEMENT MODAL (OPENING, IN, OUT, ADJUST) -->
+    <div v-if="movementModal" class="modal">
+      <div class="card p-6 space-y-5 w-full max-w-md">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-lg">عملیات موجودی</h2>
+          <span class="px-3 py-1 rounded-full text-xs font-semibold" :class="movementBadgeClass()">
+            {{ movementBadgeText() }}
+          </span>
         </div>
 
-        <div class="space-y-1">
-          <label class="text-sm font-medium">SKU</label>
-          <input
-              v-model="createForm.sku"
-              class="input w-full"
-              placeholder="مثال: DELL-XPS-001"
-          />
+        <p class="text-sm">محصول: <span class="font-bold text-indigo-600">{{ selectedProduct?.name }}</span></p>
+
+        <div class="space-y-1 text-right">
+          <label class="text-sm font-medium">تعداد</label>
+          <input type="number" v-model="movementForm.quantity" class="input w-full" min="1"/>
         </div>
 
-        <div class="space-y-1">
-          <label class="text-sm font-medium">حداقل موجودی</label>
-          <input
-              type="number"
-              v-model="createForm.min_stock"
-              class="input w-full"
-              placeholder="مثال: 10"
-          />
+        <div class="space-y-1 text-right">
+          <label class="text-sm font-medium">توضیحات</label>
+          <textarea v-model="movementForm.note" class="input w-full" rows="3"></textarea>
         </div>
 
         <div class="flex justify-end gap-3 pt-2">
-          <button class="btn-outline" @click="createModal=false">
-            لغو
-          </button>
+          <button class="btn-outline" @click="movementModal=false">لغو</button>
+          <button class="btn-primary" @click="submitMovement">تایید و ثبت</button>
+        </div>
+      </div>
+    </div>
 
-          <button class="btn-primary" @click="createProduct">
-            ثبت محصول
-          </button>
+    <!-- CREATE MODAL -->
+    <div v-if="createModal" class="modal">
+      <div class="card p-6 space-y-5 w-full max-w-md">
+        <h2 class="font-bold text-lg">افزودن محصول جدید</h2>
+
+        <div class="space-y-1 text-right">
+          <label class="text-sm font-medium">نام محصول</label>
+          <input v-model="createForm.name" class="input w-full" placeholder="مثال: لپتاپ Dell"/>
+        </div>
+
+        <div class="space-y-1 text-right">
+          <label class="text-sm font-medium">SKU (کد کالا)</label>
+          <input v-model="createForm.sku" class="input w-full" placeholder="مثال: DELL-123"/>
+        </div>
+
+        <div class="space-y-1 text-right">
+          <label class="text-sm font-medium">حداقل موجودی</label>
+          <input type="number" v-model="createForm.min_stock" class="input w-full"/>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button class="btn-outline" @click="createModal=false">لغو</button>
+          <button class="btn-primary" @click="createProduct">ثبت محصول</button>
         </div>
       </div>
     </div>
 
     <!-- EDIT MODAL -->
     <div v-if="editModal" class="modal">
-      <div class="card p-6 space-y-5">
+      <div class="card p-6 space-y-5 w-full max-w-md">
+
         <h2 class="font-bold text-lg">ویرایش محصول</h2>
 
-        <div class="space-y-1">
+        <div class="space-y-1 text-right">
           <label class="text-sm font-medium">نام محصول</label>
-          <input
-              v-model="editForm.name"
-              class="input w-full"
-          />
+          <input v-model="editForm.name" class="input w-full" />
         </div>
 
-        <div class="space-y-1">
+        <div class="space-y-1 text-right">
           <label class="text-sm font-medium">SKU</label>
-          <input
-              v-model="editForm.sku"
-              class="input w-full"
-          />
+          <input v-model="editForm.sku" class="input w-full" />
         </div>
 
-        <div class="space-y-1">
+        <div class="space-y-1 text-right">
           <label class="text-sm font-medium">حداقل موجودی</label>
-          <input
-              type="number"
-              v-model="editForm.min_stock"
-              class="input w-full"
-          />
+          <input type="number" v-model="editForm.min_stock" class="input w-full" />
         </div>
 
         <div class="flex justify-end gap-3 pt-2">
@@ -494,61 +429,9 @@ onMounted(fetchProducts)
             ذخیره تغییرات
           </button>
         </div>
+
       </div>
     </div>
-
-    <!-- MOVEMENT MODAL -->
-    <div v-if="movementModal" class="modal">
-      <div class="card p-6 space-y-5">
-
-        <div class="flex items-center justify-between">
-          <h2 class="font-bold text-lg">
-            عملیات موجودی
-          </h2>
-
-          <span
-              class="px-3 py-1 rounded-full text-xs font-semibold"
-              :class="movementBadgeClass()"
-          >
-        {{ movementBadgeText() }}
-      </span>
-        </div>
-
-        <p class="text-sm text-[var(--brand-muted)]">
-          محصول: <span class="font-semibold">{{ selectedProduct?.name }}</span>
-        </p>
-
-        <div class="space-y-1">
-          <label class="text-sm font-medium">تعداد</label>
-          <input
-              type="number"
-              v-model="movementForm.quantity"
-              class="input w-full"
-              placeholder="مثال: 20"
-          />
-        </div>
-
-        <div class="space-y-1">
-          <label class="text-sm font-medium">توضیحات</label>
-          <textarea
-              v-model="movementForm.note"
-              class="input w-full"
-              placeholder="توضیح درباره این عملیات..."
-          ></textarea>
-        </div>
-
-        <div class="flex justify-end gap-3 pt-2">
-          <button class="btn-outline" @click="movementModal=false">
-            لغو
-          </button>
-
-          <button class="btn-primary" @click="submitMovement">
-            ثبت عملیات
-          </button>
-        </div>
-      </div>
-    </div>
-
 
   </section>
 </template>
